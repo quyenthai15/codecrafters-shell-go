@@ -19,10 +19,9 @@ func main() {
 		}
 		command = strings.TrimSpace(command)
 		if command == "exit" {
-			os.Exit(0)
-		}
-		if after, found := strings.CutPrefix(command, "echo "); found {
-			fmt.Println(after)
+			break
+		} else if phrase, found := strings.CutPrefix(command, "echo "); found {
+			fmt.Println(phrase)
 			continue
 		}
 		fmt.Println(command + ": command not found", )
