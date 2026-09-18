@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"slices"
 	"strings"
 )
@@ -21,10 +22,6 @@ func main() {
 		}
 		command = strings.TrimSpace(command)
 		action, args, _ := strings.Cut(command, " ")
-		if !slices.Contains(allowedCommands, action) {
-			fmt.Println(action + ": command not found", )
-			continue
-		}
 		if action == "exit" {
 			break
 		} else if action == "echo" {
@@ -37,6 +34,21 @@ func main() {
 				fmt.Println(args + " is " + fullPath)
 			} else {
 				fmt.Println(args + ": not found")
+			}
+		} else {
+			found, _ := findExecutables(action)
+			if found {
+				arguments := []string{}
+				if len(args) > 0 {
+					arguments = strings.Split(args, " ")
+				}
+				out, err := exec.Command(action, arguments...).Output()
+				fmt.Printf("%s", out)
+				if err != nil {
+					fmt.Println("Command finished with error: ", err)
+				}
+			} else {
+				fmt.Println(action + ": command not found", )
 			}
 		}
 	}
