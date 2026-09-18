@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
+	allowedCommands := []string{"exit", "echo", "type"}
 	for {
 		fmt.Print("$ ")
 		command, err := reader.ReadString('\n')
@@ -18,12 +20,22 @@ func main() {
 			os.Exit(1)
 		}
 		command = strings.TrimSpace(command)
-		if command == "exit" {
-			break
-		} else if phrase, found := strings.CutPrefix(command, "echo "); found {
-			fmt.Println(phrase)
+		action, args, _ := strings.Cut(command, " ")
+		if !slices.Contains(allowedCommands, action) {
+			fmt.Println(action + ": command not found", )
 			continue
 		}
-		fmt.Println(command + ": command not found", )
+		if action == "exit" {
+			break
+		} else if action == "echo" {
+			fmt.Println(args)
+			continue
+		} else if action == "type" {
+			if slices.Contains(allowedCommands, args) {
+				fmt.Println(args + " is a shell builtin")
+			} else {
+				fmt.Println(args + ": not found")
+			}
+		}
 	}
 }
