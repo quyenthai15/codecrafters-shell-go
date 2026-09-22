@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"slices"
 	"strings"
 )
 
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	allowedCommands := []string{"exit", "echo", "type"}
+	// allowedCommands := []string{"exit", "echo", "type", "pwd"}
 	for {
 		fmt.Print("$ ")
 		command, err := reader.ReadString('\n')
@@ -21,28 +20,17 @@ func main() {
 			os.Exit(1)
 		}
 		command = strings.TrimSpace(command)
-		action, args, _ := strings.Cut(command, " ")
-		if action == "exit" {
-			break
-		} else if action == "echo" {
-			fmt.Println(args)
+		tokens := strings.Split(command, " ")
+		action := tokens[0]
+		args := tokens[1:]
+
+		if fn, isBuiltin := BuiltinCmds[action]; isBuiltin {
+			fn(args)
 			continue
-		} else if action == "type" {
-			if slices.Contains(allowedCommands, args) {
-				fmt.Println(args + " is a shell builtin")
-			} else if found, fullPath := findExecutables(args); found {
-				fmt.Println(args + " is " + fullPath)
-			} else {
-				fmt.Println(args + ": not found")
-			}
 		} else {
-			found, _ := findExecutables(action)
+			found, _ := FindExecutables(action)
 			if found {
-				arguments := []string{}
-				if len(args) > 0 {
-					arguments = strings.Split(args, " ")
-				}
-				out, err := exec.Command(action, arguments...).Output()
+				out, err := exec.Command(action, args...).Output()
 				fmt.Printf("%s", out)
 				if err != nil {
 					fmt.Println("Command finished with error: ", err)
@@ -52,24 +40,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func findExecutables(command string) (found bool, fullPath string) {
-	path := os.Getenv("PATH")
-
-	for dir := range strings.SplitSeq(path, ":") {
-		entries, error := os.ReadDir(dir)
-		if error != nil || len(entries) == 0 {
-			continue
-		}
-		for _, e := range entries {
-			info, error := e.Info()
-			if error == nil && info.Name() == command && strings.ContainsRune(info.Mode().String(), 'x'){
-				found = true
-				fullPath = fmt.Sprintf("%s/%s", dir, info.Name())
-				return found, fullPath
-			}
-		}
-	}
-	return found, fullPath
 }
