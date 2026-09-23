@@ -37,9 +37,13 @@ func init() {
 				return
 			}
 			path := args[0]
-			err := os.Chdir(path)
-			if err != nil {
+			fileInfo, err := os.Stat(path)
+			if err != nil || !fileInfo.IsDir() {
 				fmt.Printf("cd: %s: No such file or directory\n", path)
+				return
+			}
+			if err := os.Chdir(path); err != nil {
+				fmt.Printf("cd: %s: %v\n", path, err)
 			}
 		},
 		"exit": func(_ []string) {
