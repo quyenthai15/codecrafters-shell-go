@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -24,4 +25,13 @@ func FindExecutables(command string) (found bool, fullPath string) {
 		}
 	}
 	return found, fullPath
+}
+
+
+func ExecuteCommand(action string, args ...string) {
+	out, err := exec.Command(action, args...).Output()
+	fmt.Printf("%s", out)
+	if err != nil {
+		fmt.Println("Command finished with error: ", err)
+	}
 }

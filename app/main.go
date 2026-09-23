@@ -4,14 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 )
 
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	// allowedCommands := []string{"exit", "echo", "type", "pwd"}
 	for {
 		fmt.Print("$ ")
 		command, err := reader.ReadString('\n')
@@ -20,6 +18,9 @@ func main() {
 			os.Exit(1)
 		}
 		command = strings.TrimSpace(command)
+		if command == "" {
+			continue
+		}
 		tokens := strings.Split(command, " ")
 		action := tokens[0]
 		args := tokens[1:]
@@ -30,11 +31,7 @@ func main() {
 		} else {
 			found, _ := FindExecutables(action)
 			if found {
-				out, err := exec.Command(action, args...).Output()
-				fmt.Printf("%s", out)
-				if err != nil {
-					fmt.Println("Command finished with error: ", err)
-				}
+				ExecuteCommand(action, args...)
 			} else {
 				fmt.Println(action + ": command not found", )
 			}

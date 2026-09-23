@@ -31,6 +31,17 @@ func init() {
 				fmt.Println(dir)
 			}
 		},
+		"cd": func(args []string) {
+			if len(args) < 1 {
+				fmt.Println("cd needs at least 1 argument")
+				return
+			}
+			path := args[0]
+			err := os.Chdir(path)
+			if err != nil {
+				fmt.Printf("cd: %s: No such file or directory\n", path)
+			}
+		},
 		"exit": func(_ []string) {
 			os.Exit(0)
 		},
