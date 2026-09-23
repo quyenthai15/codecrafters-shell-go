@@ -37,6 +37,14 @@ func init() {
 				return
 			}
 			path := args[0]
+			if subPath, found := strings.CutPrefix(path, "~"); found {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				path = homeDir + subPath
+			}
 			fileInfo, err := os.Stat(path)
 			if err != nil || !fileInfo.IsDir() {
 				fmt.Printf("cd: %s: No such file or directory\n", path)
