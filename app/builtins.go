@@ -64,3 +64,40 @@ func IsBuiltin(cmd string) bool {
 	_, ok := BuiltinCmds[cmd]
 	return ok
 }
+
+func Tokenize(text string) (tokens []string) {
+	text = strings.TrimSpace(text)
+	isSpaceStarted := false
+	isSingleQuoteStarted := false
+	for idx, char := range text {
+		if len(tokens) == 0 {
+			tokens = append(tokens, "")
+		}
+		// Checking single quoted
+		if char == '\'' {
+			isSingleQuoteStarted = !isSingleQuoteStarted
+			isSpaceStarted = false
+			continue
+		}
+		if isSingleQuoteStarted {
+			tokens[len(tokens) - 1] += string(char)
+			continue
+		}
+		// treating space
+		if char == ' ' {
+			// ignoreing consecutive spaces
+			if idx >= 1 && text[idx - 1] == ' ' {
+				continue
+			}
+
+			if !isSpaceStarted {
+				isSpaceStarted = true
+				tokens = append(tokens, "")
+			}
+		} else {
+			isSpaceStarted = false
+			tokens[len(tokens) - 1] += string(char)
+		}
+	}
+	return tokens
+}
