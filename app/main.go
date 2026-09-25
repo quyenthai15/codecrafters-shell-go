@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -25,19 +26,60 @@ func main() {
 		action := tokens[0]
 		var args []string
 		if len(tokens) > 1 {
-			args = Tokenize(tokens[1])
+			args = tokenize(tokens[1])
 		}
 
-		if fn, isBuiltin := BuiltinCmds[action]; isBuiltin {
-			fn(args)
+		if handler, isBuiltin := BuiltinCmds[action]; isBuiltin {
+			handler(args)
 			continue
 		} else {
-			found, _ := FindExecutables(action)
-			if found {
-				ExecuteCommand(action, args...)
+			if _, err := exec.LookPath(action); err == nil {
+				out, err := exec.Command(action, args...).Output()
+				fmt.Printf("%s", out)
+				if err != nil {
+					fmt.Println("Command finished with error: ", err)
+				}
 			} else {
 				fmt.Println(action + ": command not found", )
 			}
 		}
 	}
+}
+
+
+func tokenize(text string) (tokens []string) {
+	text = strings.TrimSpace(text)
+	isSpaceStarted := false
+	isSingleQuoteStarted := false
+	for idx, char := range text {
+		if len(tokens) == 0 {
+			tokens = append(tokens, "")
+		}
+		// Checking single quoted
+		if char == '\'' {
+			isSingleQuoteStarted = !isSingleQuoteStarted
+			isSpaceStarted = false
+			continue
+		}
+		if isSingleQuoteStarted {
+			tokens[len(tokens) - 1] += string(char)
+			continue
+		}
+		// treating space
+		if char == ' ' {
+			// ignoreing consecutive spaces
+			if idx >= 1 && text[idx - 1] == ' ' {
+				continue
+			}
+
+			if !isSpaceStarted {
+				isSpaceStarted = true
+				tokens = append(tokens, "")
+			}
+		} else {
+			isSpaceStarted = false
+			tokens[len(tokens) - 1] += string(char)
+		}
+	}
+	return tokens
 }

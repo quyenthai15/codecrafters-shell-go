@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -17,8 +18,8 @@ func init() {
 			arg := args[0]
 			if IsBuiltin(arg) {
 				fmt.Println(arg + " is a shell builtin")
-			} else if found, fullPath := FindExecutables(arg); found {
-				fmt.Println(arg + " is " + fullPath)
+			} else if absPath, err := exec.LookPath(arg); err == nil {
+				fmt.Println(arg + " is " + absPath)
 			} else {
 				fmt.Println(arg + ": not found")
 			}
@@ -31,29 +32,7 @@ func init() {
 				fmt.Println(dir)
 			}
 		},
-		"cd": func(args []string) {
-			if len(args) < 1 {
-				fmt.Println("cd needs at least 1 argument")
-				return
-			}
-			path := args[0]
-			if subPath, found := strings.CutPrefix(path, "~"); found {
-				homeDir, err := os.UserHomeDir()
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				path = homeDir + subPath
-			}
-			fileInfo, err := os.Stat(path)
-			if err != nil || !fileInfo.IsDir() {
-				fmt.Printf("cd: %s: No such file or directory\n", path)
-				return
-			}
-			if err := os.Chdir(path); err != nil {
-				fmt.Printf("cd: %s: %v\n", path, err)
-			}
-		},
+		"cd": handleCd,
 		"exit": func(_ []string) {
 			os.Exit(0)
 		},
@@ -65,39 +44,27 @@ func IsBuiltin(cmd string) bool {
 	return ok
 }
 
-func Tokenize(text string) (tokens []string) {
-	text = strings.TrimSpace(text)
-	isSpaceStarted := false
-	isSingleQuoteStarted := false
-	for idx, char := range text {
-		if len(tokens) == 0 {
-			tokens = append(tokens, "")
-		}
-		// Checking single quoted
-		if char == '\'' {
-			isSingleQuoteStarted = !isSingleQuoteStarted
-			isSpaceStarted = false
-			continue
-		}
-		if isSingleQuoteStarted {
-			tokens[len(tokens) - 1] += string(char)
-			continue
-		}
-		// treating space
-		if char == ' ' {
-			// ignoreing consecutive spaces
-			if idx >= 1 && text[idx - 1] == ' ' {
-				continue
-			}
 
-			if !isSpaceStarted {
-				isSpaceStarted = true
-				tokens = append(tokens, "")
-			}
-		} else {
-			isSpaceStarted = false
-			tokens[len(tokens) - 1] += string(char)
-		}
+func handleCd(args []string) {
+	if len(args) < 1 {
+		fmt.Println("cd needs at least 1 argument")
+		return
 	}
-	return tokens
+	path := args[0]
+	if subPath, found := strings.CutPrefix(path, "~"); found {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		path = homeDir + subPath
+	}
+	fileInfo, err := os.Stat(path)
+	if err != nil || !fileInfo.IsDir() {
+		fmt.Printf("cd: %s: No such file or directory\n", path)
+		return
+	}
+	if err := os.Chdir(path); err != nil {
+		fmt.Printf("cd: %s: %v\n", path, err)
+	}
 }
