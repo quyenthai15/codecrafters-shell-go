@@ -10,7 +10,7 @@ type lexState int
 
 const (
 	starting lexState = iota
-	inWord
+	normal
 	singleQuoting
 	doubleQuoting
 )
@@ -24,6 +24,7 @@ const (
 func tokenize(str string) (tokens []string) {
 	str = strings.TrimSpace(str)
 	state := starting
+	var builder strings.Builder
 
 	for idx, rune := range str {
 		switch state {
@@ -36,32 +37,24 @@ func tokenize(str string) (tokens []string) {
 					case doubleQuote:
 						state = doubleQuoting
 					default:
-						state = inWord
-						if len(tokens) == 0 {
-							tokens = append(tokens, "")
-						}
-						tokens[len(tokens) - 1] += string(rune)
-
+						state = normal
+						builder.WriteRune(rune)
 				}
 			case singleQuoting:
 				if rune == singleQuote {
-					state = inWord
+					state = normal
 					continue
 				}
-				if len(tokens) == 0 {
-					tokens = append(tokens, "")
-				}
-				tokens[len(tokens) - 1] += string(rune)
+				builder.WriteRune(rune)
+
 			case doubleQuoting:
 				if rune == doubleQuote {
-					state = inWord
+					state = normal
 					continue
 				}
-				if len(tokens) == 0 {
-					tokens = append(tokens, "")
-				}
-				tokens[len(tokens) - 1] += string(rune)
-			case inWord:
+				builder.WriteRune(rune)
+
+			case normal:
 				if rune == singleQuote {
 					state = singleQuoting
 					continue
@@ -72,17 +65,16 @@ func tokenize(str string) (tokens []string) {
 				 	if str[idx - 1] == spaceRune {
 						// skip
 					} else {
-						tokens = append(tokens, "")
+						tokens = append(tokens, builder.String())
+						builder.Reset()
 					}
 					continue
 				}
-				if len(tokens) == 0 {
-					tokens = append(tokens, "")
-				}
-				tokens[len(tokens) - 1] += string(rune)
+				builder.WriteRune(rune)
 			default:
 				fmt.Println("Unexpected state: ", state)
 		}
 	}
+	tokens = append(tokens, builder.String())
 	return tokens
 }
