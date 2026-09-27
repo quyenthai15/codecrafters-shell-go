@@ -13,12 +13,14 @@ const (
 	normal
 	singleQuoting
 	doubleQuoting
+	escaping
 )
 
 const (
 	spaceRune = ' '
 	singleQuote = '\''
 	doubleQuote = '"'
+	escapeRune = '\\'
 )
 
 func tokenize(str string) (tokens []string) {
@@ -36,6 +38,8 @@ func tokenize(str string) (tokens []string) {
 						state = singleQuoting
 					case doubleQuote:
 						state = doubleQuoting
+					case escapeRune:
+						state = escaping
 					default:
 						state = normal
 						builder.WriteRune(rune)
@@ -43,34 +47,39 @@ func tokenize(str string) (tokens []string) {
 			case singleQuoting:
 				if rune == singleQuote {
 					state = normal
-					continue
+				} else {
+					builder.WriteRune(rune)
 				}
-				builder.WriteRune(rune)
 
 			case doubleQuoting:
 				if rune == doubleQuote {
 					state = normal
-					continue
+				} else {
+					builder.WriteRune(rune)
 				}
-				builder.WriteRune(rune)
 
 			case normal:
-				if rune == singleQuote {
-					state = singleQuoting
-					continue
-				} else if rune == doubleQuote {
-					state = doubleQuoting
-					continue
-				} else if rune == spaceRune {
-				 	if str[idx - 1] == spaceRune {
-						// skip
-					} else {
-						tokens = append(tokens, builder.String())
-						builder.Reset()
-					}
-					continue
+				switch rune {
+				 	case singleQuote:
+							state = singleQuoting
+					case doubleQuote:
+						state = doubleQuoting
+					case spaceRune:
+					 	if str[idx - 1] == spaceRune {
+							// skip
+						} else {
+							tokens = append(tokens, builder.String())
+							builder.Reset()
+						}
+					case escapeRune:
+						state = escaping
+					default:
+						builder.WriteRune(rune)
 				}
+
+			case escaping:
 				builder.WriteRune(rune)
+				state = normal
 			default:
 				fmt.Println("Unexpected state: ", state)
 		}
