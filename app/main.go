@@ -22,12 +22,10 @@ func main() {
 		if command == "" {
 			continue
 		}
-		tokens := strings.SplitN(command, " ", 2)
+
+		tokens := tokenize(command)
 		action := tokens[0]
-		var args []string
-		if len(tokens) > 1 {
-			args = tokenize(tokens[1])
-		}
+		args := tokens[1:]
 
 		if handler, isBuiltin := BuiltinCmds[action]; isBuiltin {
 			handler(args)
