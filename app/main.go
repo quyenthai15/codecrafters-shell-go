@@ -10,23 +10,30 @@ import (
 )
 
 
-func main() {
+func readInput() []string {
+	fmt.Print("$ ")
+
 	reader := bufio.NewReader(os.Stdin)
+	command, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error reading input", err)
+		os.Exit(1)
+	}
+	command = strings.TrimSpace(command)
+
+	args := tokenize(command)
+	return args
+}
+
+
+func main() {
 	for {
-		fmt.Print("$ ")
-		command, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading input", err)
-			os.Exit(1)
-		}
-		command = strings.TrimSpace(command)
-		if command == "" {
+		inputs := readInput()
+		if len(inputs) == 0 {
 			continue
 		}
-
-		tokens := tokenize(command)
-		action := tokens[0]
-		args := tokens[1:]
+		action := inputs[0]
+		args := inputs[1:]
 
 		args, outFile, err := parseRedirect(args)
 		if err != nil {
@@ -38,8 +45,10 @@ func main() {
 			out = outFile
 		}
 
-		if handler, isBuiltin := BuiltinCmds[action]; isBuiltin {
-			handler(args, out)
+		if cmd, isBuiltin := BuiltinCmds[action]; isBuiltin {
+			cmd.Stdout = out
+			cmd.Stderr = os.Stderr
+			cmd.Run(args)
 		} else if _, err := exec.LookPath(action); err == nil {
 			cmd := exec.Command(action, args...)
 			cmd.Stdout = out

@@ -90,6 +90,8 @@ func tokenize(str string) (tokens []string) {
 			fmt.Println("Unexpected state: ", state)
 		}
 	}
-	tokens = append(tokens, builder.String())
+	if builder.Len() > 0 {
+		tokens = append(tokens, builder.String())
+	}
 	return tokens
 }
