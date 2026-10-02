@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-
 type lexState int
 
 const (
@@ -18,10 +17,10 @@ const (
 )
 
 const (
-	spaceRune = ' '
+	spaceRune   = ' '
 	singleQuote = '\''
 	doubleQuote = '"'
-	escapeRune = '\\'
+	escapeRune  = '\\'
 )
 
 func tokenize(str string) (tokens []string) {
@@ -64,12 +63,12 @@ func tokenize(str string) (tokens []string) {
 
 		case normal:
 			switch rune {
-		 	case singleQuote:
-					state = singleQuoting
+			case singleQuote:
+				state = singleQuoting
 			case doubleQuote:
 				state = doubleQuoting
 			case spaceRune:
-			 	if str[idx - 1] == spaceRune {
+				if str[idx-1] == spaceRune {
 					// skip
 				} else {
 					tokens = append(tokens, builder.String())

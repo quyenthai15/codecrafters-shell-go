@@ -2,38 +2,39 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-var BuiltinCmds map[string]func(args []string)
+var BuiltinCmds map[string]func(args []string, w io.Writer)
 
 func init() {
-	BuiltinCmds = map[string]func(args []string){
-		"echo": func(args []string) {
-			fmt.Println(strings.Join(args, " "))
+	BuiltinCmds = map[string]func(args []string, w io.Writer){
+		"echo": func(args []string, w io.Writer) {
+			fmt.Fprintln(w, strings.Join(args, " "))
 		},
-		"type": func(args []string) {
+		"type": func(args []string, w io.Writer) {
 			arg := args[0]
 			if IsBuiltin(arg) {
-				fmt.Println(arg + " is a shell builtin")
+				fmt.Fprintln(w, arg+" is a shell builtin")
 			} else if absPath, err := exec.LookPath(arg); err == nil {
-				fmt.Println(arg + " is " + absPath)
+				fmt.Fprintln(w, arg+" is "+absPath)
 			} else {
-				fmt.Println(arg + ": not found")
+				fmt.Fprintln(w, arg+": not found")
 			}
 		},
-		"pwd": func(_ []string) {
+		"pwd": func(_ []string, w io.Writer) {
 			dir, err := os.Getwd()
 			if err != nil {
-				fmt.Println("pwd error: ", err)
+				fmt.Fprintln(w, "pwd error: ", err)
 			} else {
-				fmt.Println(dir)
+				fmt.Fprintln(w, dir)
 			}
 		},
 		"cd": handleCd,
-		"exit": func(_ []string) {
+		"exit": func(_ []string, _ io.Writer) {
 			os.Exit(0)
 		},
 	}
@@ -44,27 +45,26 @@ func IsBuiltin(cmd string) bool {
 	return ok
 }
 
-
-func handleCd(args []string) {
+func handleCd(args []string, w io.Writer) {
 	if len(args) < 1 {
-		fmt.Println("cd needs at least 1 argument")
+		fmt.Fprintln(w, "cd needs at least 1 argument")
 		return
 	}
 	path := args[0]
 	if subPath, found := strings.CutPrefix(path, "~"); found {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(w, err)
 			return
 		}
 		path = homeDir + subPath
 	}
 	fileInfo, err := os.Stat(path)
 	if err != nil || !fileInfo.IsDir() {
-		fmt.Printf("cd: %s: No such file or directory\n", path)
+		fmt.Fprintf(w, "cd: %s: No such file or directory\n", path)
 		return
 	}
 	if err := os.Chdir(path); err != nil {
-		fmt.Printf("cd: %s: %v\n", path, err)
+		fmt.Fprintf(w, "cd: %s: %v\n", path, err)
 	}
 }

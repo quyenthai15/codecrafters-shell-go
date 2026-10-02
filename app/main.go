@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -27,19 +28,36 @@ func main() {
 		action := tokens[0]
 		args := tokens[1:]
 
-		if handler, isBuiltin := BuiltinCmds[action]; isBuiltin {
-			handler(args)
+		args, outFile, err := parseRedirect(args)
+		if err != nil {
+			fmt.Println("Error parsing redirect: ", err)
 			continue
-		} else {
-			if _, err := exec.LookPath(action); err == nil {
-				out, err := exec.Command(action, args...).Output()
-				fmt.Printf("%s", out)
-				if err != nil {
-					fmt.Println("Command finished with error: ", err)
+		}
+		out := os.Stdout
+		if outFile != nil {
+			out = outFile
+		}
+
+		if handler, isBuiltin := BuiltinCmds[action]; isBuiltin {
+			handler(args, out)
+		} else if _, err := exec.LookPath(action); err == nil {
+			cmd := exec.Command(action, args...)
+			cmd.Stdout = out
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				var exitErr *exec.ExitError
+				// Only print non-exit message
+				if isExit := errors.As(err, &exitErr); !isExit {
+					fmt.Fprintln(os.Stderr, err)
 				}
-			} else {
-				fmt.Println(action + ": command not found", )
 			}
+		} else {
+			fmt.Fprintln(os.Stderr, action+": command not found")
+		}
+
+		// Clean up opened file
+		if outFile != nil {
+			outFile.Close()
 		}
 	}
 }
