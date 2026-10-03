@@ -72,5 +72,8 @@ func main() {
 		if outFile != nil {
 			outFile.Close()
 		}
+		if errFile != nil {
+			errFile.Close()
+		}
 	}
 }
