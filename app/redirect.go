@@ -7,11 +7,19 @@ import (
 
 func parseRedirect(args []string) (rest []string, stdoutFile *os.File, stderrFile *os.File, err error) {
 	var stdout, stderr string
+	var isAppendStdout bool
+
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case ">", "1>":
 			if len(args) > i+1 {
 				stdout = args[i+1]
+				i++
+			}
+		case ">>", "1>>":
+			if len(args) > i+1 {
+				stdout = args[i+1]
+				isAppendStdout = true
 				i++
 			}
 		case "2>":
@@ -29,7 +37,13 @@ func parseRedirect(args []string) (rest []string, stdoutFile *os.File, stderrFil
 	}
 
 	if stdout != "" {
-		stdoutFile, err = os.Create(stdout)
+		flag := os.O_WRONLY | os.O_CREATE
+		if isAppendStdout {
+			flag |= os.O_APPEND
+		} else {
+			flag |= os.O_TRUNC
+		}
+		stdoutFile, err = os.OpenFile(stdout, flag, 0666)
 		if err != nil {
 			fmt.Println("Error creating output file: ", err)
 			return nil, nil, nil, err
