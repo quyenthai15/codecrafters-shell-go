@@ -3,29 +3,45 @@ package main
 import (
 	"fmt"
 	"os"
-	"slices"
 )
 
-func parseRedirect(args []string) (rest []string, w *os.File, err error) {
-	redirectIdx := -1
-	for i, arg := range slices.Backward(args) {
-		if arg == ">" || arg == "1>" {
-			redirectIdx = i
-			break
+func parseRedirect(args []string) (rest []string, stdoutFile *os.File, stderrFile *os.File, err error) {
+	var stdout, stderr string
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case ">", "1>":
+			if len(args) > i+1 {
+				stdout = args[i+1]
+				i++
+			}
+		case "2>":
+			if len(args) > i+1 {
+				stderr = args[i+1]
+				i++
+			}
+		default:
+			rest = append(rest, args[i])
 		}
 	}
-	if redirectIdx == -1 {
-		return args, nil, nil
-	}
-	if redirectIdx > -1 {
-		outputFile := args[redirectIdx+1]
-		rest = args[:redirectIdx]
-		w, err = os.Create(outputFile)
 
+	if stdout == "" && stderr == "" {
+		return args, nil, nil, nil
+	}
+
+	if stdout != "" {
+		stdoutFile, err = os.Create(stdout)
 		if err != nil {
 			fmt.Println("Error creating output file: ", err)
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
-	return rest, w, nil
+
+	if stderr != "" {
+		stderrFile, err = os.Create(stderr)
+		if err != nil {
+			fmt.Println("Error creating err file: ", err)
+			return nil, nil, nil, err
+		}
+	}
+	return rest, stdoutFile, stderrFile, nil
 }

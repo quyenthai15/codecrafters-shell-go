@@ -35,29 +35,33 @@ func main() {
 		action := inputs[0]
 		args := inputs[1:]
 
-		args, outFile, err := parseRedirect(args)
+		args, outFile, errFile, err := parseRedirect(args)
 		if err != nil {
 			fmt.Println("Error parsing redirect: ", err)
 			continue
 		}
-		out := os.Stdout
+		stdout := os.Stdout
+		stderr := os.Stderr
 		if outFile != nil {
-			out = outFile
+			stdout = outFile
+		}
+		if errFile != nil {
+			stderr = errFile
 		}
 
 		if cmd, isBuiltin := BuiltinCmds[action]; isBuiltin {
-			cmd.Stdout = out
-			cmd.Stderr = os.Stderr
+			cmd.Stdout = stdout
+			cmd.Stderr = stderr
 			cmd.Run(args)
 		} else if _, err := exec.LookPath(action); err == nil {
 			cmd := exec.Command(action, args...)
-			cmd.Stdout = out
-			cmd.Stderr = os.Stderr
+			cmd.Stdout = stdout
+			cmd.Stderr = stderr
 			if err := cmd.Run(); err != nil {
 				var exitErr *exec.ExitError
 				// Only print non-exit message
 				if isExit := errors.As(err, &exitErr); !isExit {
-					fmt.Fprintln(os.Stderr, err)
+					fmt.Fprintln(stderr, err)
 				}
 			}
 		} else {
