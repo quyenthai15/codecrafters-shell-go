@@ -1,8 +1,0 @@
-err.txt
-out.txt
-
-app:
-builtins.go
-main.go
-redirect.go
-tokenizer.go
