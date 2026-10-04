@@ -1,5 +1,0 @@
-fdfdf
-builtins.go
-main.go
-redirect.go
-tokenizer.go

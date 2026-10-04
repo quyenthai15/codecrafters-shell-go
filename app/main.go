@@ -1,34 +1,51 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/chzyer/readline"
 )
 
-
-func readInput() []string {
-	fmt.Print("$ ")
-
-	reader := bufio.NewReader(os.Stdin)
-	command, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error reading input", err)
-		os.Exit(1)
-	}
-	command = strings.TrimSpace(command)
-
-	args := tokenize(command)
-	return args
-}
-
+var completer = readline.NewPrefixCompleter(
+	readline.PcItem("echo"),
+	readline.PcItem("exit"),
+	readline.PcItem("pwd"),
+	readline.PcItem("cd"),
+	readline.PcItem("type"),
+)
 
 func main() {
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:       "$ ",
+		AutoComplete: completer,
+		HistoryFile:  "/tmp/readline.tmp",
+		HistoryLimit: 20,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rl.Close()
+	rl.CaptureExitSignal()
+
 	for {
-		inputs := readInput()
+		line, err := rl.Readline()
+		if err == readline.ErrInterrupt {
+			if len(line) == 0 {
+				break
+			} else {
+				continue
+			}
+		} else if err == io.EOF {
+			break
+		}
+		inputs := tokenize(strings.TrimSpace(line))
+
 		if len(inputs) == 0 {
 			continue
 		}
