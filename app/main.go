@@ -12,13 +12,6 @@ import (
 	"github.com/chzyer/readline"
 )
 
-var completer = readline.NewPrefixCompleter(
-	readline.PcItem("echo"),
-	readline.PcItem("exit"),
-	readline.PcItem("pwd"),
-	readline.PcItem("cd"),
-	readline.PcItem("type"),
-)
 
 func main() {
 	rl, err := readline.NewEx(&readline.Config{
