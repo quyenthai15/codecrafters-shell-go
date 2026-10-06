@@ -12,14 +12,8 @@ import (
 	"github.com/chzyer/readline"
 )
 
-
 func main() {
-	rl, err := readline.NewEx(&readline.Config{
-		Prompt:       "$ ",
-		AutoComplete: completer,
-		HistoryFile:  "/tmp/readline.tmp",
-		HistoryLimit: 20,
-	})
+	rl, err := readline.NewEx(&rlConfig)
 	if err != nil {
 		log.Fatal(err)
 	}

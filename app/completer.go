@@ -16,8 +16,15 @@ var completer = readline.NewPrefixCompleter(
 	readline.PcItem("type"),
 
 	readline.PcItemDynamic(func(s string) []string {
-			fmt.Print(string(bellChar))
-			return []string{}
-		},
+		fmt.Print(string(bellChar))
+		return []string{}
+	},
 	),
 )
+
+var rlConfig = readline.Config{
+	Prompt:       "$ ",
+	AutoComplete: completer,
+	HistoryFile:  "/tmp/readline.tmp",
+	HistoryLimit: 20,
+}
