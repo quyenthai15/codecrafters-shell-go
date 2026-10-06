@@ -6,7 +6,7 @@ import (
 	"github.com/chzyer/readline"
 )
 
-const bellChar = '\x07'
+var allCmds []readline.PrefixCompleterInterface
 
 var completer = readline.NewPrefixCompleter(
 	readline.PcItem("echo"),
@@ -14,17 +14,29 @@ var completer = readline.NewPrefixCompleter(
 	readline.PcItem("pwd"),
 	readline.PcItem("cd"),
 	readline.PcItem("type"),
-
-	readline.PcItemDynamic(func(s string) []string {
-		fmt.Print(string(bellChar))
-		return []string{}
-	},
-	),
 )
 
 var rlConfig = readline.Config{
 	Prompt:       "$ ",
-	AutoComplete: completer,
+	AutoComplete: &BuiltinCompleter{},
 	HistoryFile:  "/tmp/readline.tmp",
 	HistoryLimit: 20,
+}
+
+type BuiltinCompleter struct {}
+
+func (c *BuiltinCompleter) Do(line []rune, pos int) (newLine [][]rune, offset int) {
+	newLine, offset = completer.Do(line, pos)
+	if offset == 0 {
+		fmt.Print(string('\x07'))
+		return nil, 0
+	}
+
+	return newLine, offset
+}
+
+func init() {
+	for key := range BuiltinCmds {
+		allCmds = append(allCmds, readline.PcItem(key))
+	}
 }
