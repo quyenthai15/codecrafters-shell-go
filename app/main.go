@@ -13,7 +13,12 @@ import (
 )
 
 func main() {
-	rl, err := readline.NewEx(&rlConfig)
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:       "$ ",
+		AutoComplete: NewCustomCompleter(),
+		HistoryFile:  "/tmp/readline.tmp",
+		HistoryLimit: 20,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}

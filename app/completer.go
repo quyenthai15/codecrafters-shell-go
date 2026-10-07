@@ -2,41 +2,53 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"slices"
 
 	"github.com/chzyer/readline"
 )
 
-var allCmds []readline.PrefixCompleterInterface
 
-var completer = readline.NewPrefixCompleter(
-	readline.PcItem("echo"),
-	readline.PcItem("exit"),
-	readline.PcItem("pwd"),
-	readline.PcItem("cd"),
-	readline.PcItem("type"),
-)
-
-var rlConfig = readline.Config{
-	Prompt:       "$ ",
-	AutoComplete: &BuiltinCompleter{},
-	HistoryFile:  "/tmp/readline.tmp",
-	HistoryLimit: 20,
+type BuiltinCompleter struct {
+	completer readline.AutoCompleter
 }
 
-type BuiltinCompleter struct {}
+
+func NewCustomCompleter() *BuiltinCompleter {
+	var items []readline.PrefixCompleterInterface
+
+	// List builtin commands
+	for key := range BuiltinCmds {
+		items = append(items, readline.PcItem(key))
+	}
+
+	// List all executables from PATH
+	pathEnv := os.Getenv("PATH")
+	for _, dir := range filepath.SplitList(pathEnv) {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				items = append(items, readline.PcItem(entry.Name()))
+			}
+		}
+	}
+
+	items = slices.Concat(items)
+	return &BuiltinCompleter{
+		completer: readline.NewPrefixCompleter(items...),
+	}
+}
 
 func (c *BuiltinCompleter) Do(line []rune, pos int) (newLine [][]rune, offset int) {
-	newLine, offset = completer.Do(line, pos)
+	newLine, offset = c.completer.Do(line, pos)
 	if offset == 0 {
-		fmt.Print(string('\x07'))
+		fmt.Print("\x07")
 		return nil, 0
 	}
 
 	return newLine, offset
-}
-
-func init() {
-	for key := range BuiltinCmds {
-		allCmds = append(allCmds, readline.PcItem(key))
-	}
 }

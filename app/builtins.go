@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 )
 
@@ -18,22 +19,15 @@ func (c Command) Run(args []string) {
 	c.exec(c, args)
 }
 
-var BuiltinCmds map[string]Command
+var BuiltinNames = []string{"echo", "type", "pwd", "cd", "exit"}
 
-func init() {
-	BuiltinCmds = map[string]Command{
+var BuiltinCmds = map[string]Command{
 		"echo": {exec: handleEcho},
 		"type": {exec: handleType},
 		"pwd":  {exec: handlePwd},
 		"cd":   {exec: handleCd},
 		"exit": {exec: handleExit},
 	}
-}
-
-func IsBuiltin(cmd string) bool {
-	_, ok := BuiltinCmds[cmd]
-	return ok
-}
 
 func handleCd(cmd Command, args []string) {
 	if len(args) == 0 {
@@ -68,7 +62,7 @@ func handleType(cmd Command, args []string) {
 		return
 	}
 	arg := args[0]
-	if IsBuiltin(arg) {
+	if slices.Contains(BuiltinNames, arg) {
 		fmt.Fprintln(cmd.Stdout, arg+" is a shell builtin")
 	} else if absPath, err := exec.LookPath(arg); err == nil {
 		fmt.Fprintln(cmd.Stdout, arg+" is "+absPath)
