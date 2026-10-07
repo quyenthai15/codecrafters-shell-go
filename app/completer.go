@@ -31,7 +31,11 @@ func NewCustomCompleter() *BuiltinCompleter {
 			continue
 		}
 		for _, entry := range entries {
-			if !entry.IsDir() {
+			info, err := entry.Info()
+			if err != nil {
+				continue
+			}
+			if !info.IsDir() && info.Mode().Perm()&0111 != 0 {
 				items = append(items, readline.PcItem(entry.Name()))
 			}
 		}
