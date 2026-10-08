@@ -12,10 +12,12 @@ import (
 	"github.com/chzyer/readline"
 )
 
+const prompt = "$ "
+
 func main() {
 	rl, err := readline.NewEx(&readline.Config{
-		Prompt:       "$ ",
-		AutoComplete: NewCustomCompleter(),
+		Prompt:       prompt,
+		AutoComplete: NewCustomCompleter(prompt),
 		HistoryFile:  "/tmp/readline.tmp",
 		HistoryLimit: 20,
 	})
