@@ -24,9 +24,6 @@ func NewCustomCompleter(prompt string) *BuiltinCompleter {
 // because readline's own menu renders below a redrawn prompt, not above it.
 func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	prefix := string(line[:pos])
-	if strings.ContainsRune(prefix, ' ') {
-		return c.ring()
-	}
 
 	matches := listCommands(prefix, os.Getenv("PATH"))
 	switch {
@@ -36,9 +33,6 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 		return suffixOf(matches[0]+" ", prefix)
 	}
 
-	if lcp := commonPrefix(matches); len(lcp) > len(prefix) {
-		return suffixOf(lcp, prefix)
-	}
 	if c.lastTab != prefix {
 		c.lastTab = prefix
 		return c.ring()
@@ -89,14 +83,4 @@ func executableNames(pathEnv string) []string {
 		}
 	}
 	return names
-}
-
-// commonPrefix expects sorted input: only the first and last can differ most.
-func commonPrefix(sorted []string) string {
-	first, last := sorted[0], sorted[len(sorted)-1]
-	i := 0
-	for i < len(first) && i < len(last) && first[i] == last[i] {
-		i++
-	}
-	return first[:i]
 }

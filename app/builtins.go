@@ -22,12 +22,12 @@ func (c Command) Run(args []string) {
 var BuiltinNames = []string{"echo", "type", "pwd", "cd", "exit"}
 
 var BuiltinCmds = map[string]Command{
-		"echo": {exec: handleEcho},
-		"type": {exec: handleType},
-		"pwd":  {exec: handlePwd},
-		"cd":   {exec: handleCd},
-		"exit": {exec: handleExit},
-	}
+	"echo": {exec: handleEcho},
+	"type": {exec: handleType},
+	"pwd":  {exec: handlePwd},
+	"cd":   {exec: handleCd},
+	"exit": {exec: handleExit},
+}
 
 func handleCd(cmd Command, args []string) {
 	if len(args) == 0 {
