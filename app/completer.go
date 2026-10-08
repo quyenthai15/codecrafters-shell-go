@@ -33,6 +33,10 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 		return suffixOf(matches[0]+" ", prefix)
 	}
 
+	if common := commonPrefix(matches); len(common) > len(prefix) {
+		return suffixOf(common, prefix)
+	}
+
 	if c.lastTab != prefix {
 		c.lastTab = prefix
 		return c.ring()
@@ -83,4 +87,16 @@ func executableNames(pathEnv string) []string {
 		}
 	}
 	return names
+}
+
+func commonPrefix(sortedMatches []string) string {
+	first, last := sortedMatches[0], sortedMatches[len(sortedMatches)-1]
+	i := 0
+	for i = range len(first) {
+		if first[i] != last[i] {
+			break
+		}
+		i++
+	}
+	return first[:i]
 }
