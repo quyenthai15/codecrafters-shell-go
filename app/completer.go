@@ -24,8 +24,17 @@ func NewCustomCompleter(prompt string) *BuiltinCompleter {
 // because readline's own menu renders below a redrawn prompt, not above it.
 func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	prefix := string(line[:pos])
+	isCommand := !strings.Contains(prefix, " ")
 
-	matches := listCommands(prefix, os.Getenv("PATH"))
+	var matches []string
+	if isCommand {
+		matches = listCommands(prefix, os.Getenv("PATH"))
+	} else {
+		parts := strings.Split(prefix, " ")
+		prefix = parts[len(parts) - 1]
+		matches = listFiles(prefix, ".")
+	}
+
 	switch {
 	case len(matches) == 0:
 		return c.ring()
@@ -69,6 +78,20 @@ func listCommands(prefix, pathEnv string) []string {
 	})
 	slices.Sort(matches)
 	return matches
+}
+
+func listFiles(prefix, dirPath string) []string {
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return  []string{}
+	}
+	var files []string
+	for _, e := range entries {
+		if name := e.Name(); !e.IsDir() && strings.HasPrefix(name, prefix) {
+			files = append(files, name)
+		}
+	}
+	return files
 }
 
 func executableNames(pathEnv string) []string {
