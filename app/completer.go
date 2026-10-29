@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -31,8 +32,12 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 		matches = listCommands(prefix, os.Getenv("PATH"))
 	} else {
 		parts := strings.Split(prefix, " ")
-		prefix = parts[len(parts) - 1]
+		prefix = parts[len(parts)-1]
 		matches = listFiles(prefix, ".")
+
+		if len(matches) == 0 {
+
+		}
 	}
 
 	switch {
@@ -83,12 +88,16 @@ func listCommands(prefix, pathEnv string) []string {
 func listFiles(prefix, dirPath string) []string {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
-		return  []string{}
+		return []string{}
 	}
 	var files []string
 	for _, e := range entries {
-		if name := e.Name(); !e.IsDir() && strings.HasPrefix(name, prefix) {
-			files = append(files, name)
+		relPath := path.Join(dirPath, e.Name())
+		if !e.IsDir() && strings.HasPrefix(relPath, prefix) {
+			files = append(files, relPath)
+		} else if e.IsDir() {
+			subs := listFiles(prefix, path.Join(dirPath, e.Name()))
+			files = append(files, subs...)
 		}
 	}
 	return files
