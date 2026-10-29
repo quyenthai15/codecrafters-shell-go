@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"maps"
 	"os"
-	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -33,16 +32,14 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	} else {
 		parts := strings.Split(prefix, " ")
 		prefix = parts[len(parts)-1]
-		matches = listFiles(prefix, ".")
-
-		if len(matches) == 0 {
-
-		}
+		matches = listFiles(prefix)
 	}
 
 	switch {
 	case len(matches) == 0:
 		return c.ring()
+	case len(matches) == 1 && strings.HasSuffix(matches[0], "/"):
+		return suffixOf(matches[0], prefix)
 	case len(matches) == 1:
 		return suffixOf(matches[0]+" ", prefix)
 	}
@@ -85,21 +82,29 @@ func listCommands(prefix, pathEnv string) []string {
 	return matches
 }
 
-func listFiles(prefix, dirPath string) []string {
+func listFiles(prefix string) []string {
+	dirPath, base := filepath.Split(prefix)
+	if dirPath == "" {
+		dirPath = "."
+	}
+
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return []string{}
 	}
 	var files []string
 	for _, e := range entries {
-		relPath := path.Join(dirPath, e.Name())
-		if !e.IsDir() && strings.HasPrefix(relPath, prefix) {
-			files = append(files, relPath)
-		} else if e.IsDir() {
-			subs := listFiles(prefix, path.Join(dirPath, e.Name()))
-			files = append(files, subs...)
+		if !strings.HasPrefix(e.Name(), base) {
+			continue
 		}
+		relPath := filepath.Join(dirPath, e.Name())
+
+		if e.IsDir() {
+			relPath += "/"
+		}
+		files = append(files, relPath)
 	}
+	slices.Sort(files)
 	return files
 }
 
