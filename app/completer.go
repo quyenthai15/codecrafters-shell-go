@@ -47,8 +47,8 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 		return suffixOf(fullCompleted, prefix)
 	}
 
-	if common := commonPrefix(matches); len(common) > len(prefix) {
-		return suffixOf(common, prefix)
+	if completed := strings.Join(append(parts[:len(parts)-1], commonPrefix(matches)), " "); len(completed) > len(prefix) {
+		return suffixOf(completed, prefix)
 	}
 
 	if c.lastTab != prefix {
