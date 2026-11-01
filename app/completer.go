@@ -24,24 +24,27 @@ func NewCustomCompleter(prompt string) *BuiltinCompleter {
 // because readline's own menu renders below a redrawn prompt, not above it.
 func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	prefix := string(line[:pos])
+	parts := strings.Split(prefix, " ")
 	isCommand := !strings.Contains(prefix, " ")
 
 	var matches []string
+	var filePrefix string
 	if isCommand {
 		matches = listCommands(prefix, os.Getenv("PATH"))
 	} else {
-		parts := strings.Split(prefix, " ")
-		prefix = parts[len(parts)-1]
-		matches = listFiles(prefix)
+		filePrefix = parts[len(parts)-1]
+		matches = listFiles(filePrefix)
 	}
 
 	switch {
 	case len(matches) == 0:
 		return c.ring()
-	case len(matches) == 1 && strings.HasSuffix(matches[0], "/"):
-		return suffixOf(matches[0], prefix)
 	case len(matches) == 1:
-		return suffixOf(matches[0]+" ", prefix)
+		fullCompleted := strings.Join(append(parts[:len(parts)-1], matches[0]), " ")
+		if !strings.HasSuffix(matches[0], "/") {
+			fullCompleted += " "
+		}
+		return suffixOf(fullCompleted, prefix)
 	}
 
 	if common := commonPrefix(matches); len(common) > len(prefix) {
@@ -54,7 +57,7 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	}
 
 	fmt.Fprintf(readline.Stdout, "\r\n%s\r\n%s%s", strings.Join(matches, "  "), c.prompt, prefix)
-	return nil, 0
+	return nil, len(prefix)
 }
 
 func (c *BuiltinCompleter) ring() ([][]rune, int) {
