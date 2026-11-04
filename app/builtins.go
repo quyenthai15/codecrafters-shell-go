@@ -19,14 +19,15 @@ func (c Command) Run(args []string) {
 	c.exec(c, args)
 }
 
-var BuiltinNames = []string{"echo", "type", "pwd", "cd", "exit"}
+var BuiltinNames = []string{"echo", "type", "pwd", "cd", "exit", "complete"}
 
 var BuiltinCmds = map[string]Command{
-	"echo": {exec: handleEcho},
-	"type": {exec: handleType},
-	"pwd":  {exec: handlePwd},
-	"cd":   {exec: handleCd},
-	"exit": {exec: handleExit},
+	"echo":     {exec: handleEcho},
+	"type":     {exec: handleType},
+	"pwd":      {exec: handlePwd},
+	"cd":       {exec: handleCd},
+	"complete": {exec: handleComplete},
+	"exit":     {exec: handleExit},
 }
 
 func handleCd(cmd Command, args []string) {
@@ -82,4 +83,8 @@ func handlePwd(cmd Command, args []string) {
 
 func handleExit(cmd Command, args []string) {
 	os.Exit(0)
+}
+
+func handleComplete(cmd Command, args []string) {
+	//
 }

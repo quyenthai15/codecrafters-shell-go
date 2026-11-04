@@ -40,11 +40,11 @@ func (c *BuiltinCompleter) Do(line []rune, pos int) ([][]rune, int) {
 	case len(matches) == 0:
 		return c.ring()
 	case len(matches) == 1:
-		fullCompleted := strings.Join(append(parts[:len(parts)-1], matches[0]), " ")
+		completed := strings.Join(append(parts[:len(parts)-1], matches[0]), " ")
 		if !strings.HasSuffix(matches[0], "/") {
-			fullCompleted += " "
+			completed += " "
 		}
-		return suffixOf(fullCompleted, prefix)
+		return suffixOf(completed, prefix)
 	}
 
 	if completed := strings.Join(append(parts[:len(parts)-1], commonPrefix(matches)), " "); len(completed) > len(prefix) {
