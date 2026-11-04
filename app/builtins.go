@@ -88,6 +88,7 @@ func handleExit(cmd Command, args []string) {
 var completionRegistry = map[string]string{}
 func handleComplete(cmd Command, args []string) {
 	if len(args) < 2 {
+		fmt.Fprintln(cmd.Stderr, "complete: invalid command")
 		return
 	}
 
@@ -96,6 +97,10 @@ func handleComplete(cmd Command, args []string) {
 	cFlag := slices.Index(args, "-C") > -1
 	switch {
 		case cFlag:
+			if len(args) < 3 {
+				fmt.Fprintln(cmd.Stderr, "complete: invalid command")
+				return
+			}
 			script := args[1]
 			completionRegistry[command] = script
 		case pFlag:
