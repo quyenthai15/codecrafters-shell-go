@@ -85,14 +85,26 @@ func handleExit(cmd Command, args []string) {
 	os.Exit(0)
 }
 
-var completionRegistry map[string]string
+var completionRegistry = map[string]string{}
 func handleComplete(cmd Command, args []string) {
 	if len(args) < 2 {
 		return
 	}
+
 	command := args[len(args)-1]
 	pFlag := slices.Index(args, "-p") > -1
-	if _, ok := completionRegistry[command]; !ok && pFlag {
-		fmt.Fprintf(cmd.Stdout, "complete: %s: no completion specification\n", command)
+	cFlag := slices.Index(args, "-C") > -1
+	switch {
+		case cFlag:
+			script := args[1]
+			completionRegistry[command] = script
+		case pFlag:
+			if script, ok := completionRegistry[command]; !ok {
+				fmt.Fprintf(cmd.Stdout, "complete: %s: no completion specification\n", command)
+			} else {
+				fmt.Fprintf(cmd.Stdout, "complete -C '%s' %s\n", script, command)
+			}
+		default:
+			fmt.Fprintln(cmd.Stdout, "unknown command")
 	}
 }
